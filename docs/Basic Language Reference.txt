@@ -1,0 +1,96 @@
+The machine language is based on a fixed-length 16-bit instruction word with
+an 11-bit data word.
+
+The program counter is 4 bits (but "firmware" limited to 14 instructions)
+
+There are two main types of ops, Normal Ops and Integer Ops.
+Normal Ops are just the standard ops. They include add, sub, mov, jmp, jro, among others. They don't involve integers in the instruction (there are some exceptions).
+The other type, Integer Ops, are composed of mov and add except they operate on 11-bit integers. They are the primary way of moving in integers.
+
+This is only just a basic guide to the machine language so it won't go into much detail or depth.
+
+Bit 15 signifies the Op type, 0 is Normal Op, 1 is Integer Op.
+
+The opcodes are as follows:
+(for op type = 0)
+add - 000
+mov - 001
+neg - 010
+sub - 011
+sav - 100
+swp - 101
+jmp - 110
+jro - 111
+
+(for op type = 1)
+add - 0
+mov - 1
+
+The ports are as follows:
+nil - 000
+acc - 001
+left - 010
+right - 011
+up - 100
+down - 101
+any - 110
+last - 111
+
+The jmp types are as follows:
+jmp - 111
+jez - 100
+jnz - 011
+jgz - 010
+jlz - 001
+
+jro type is as follows:
+integer offset - 0
+port - 1
+
+Note: all integers are in 2's complement binary notation.
+	The only exception is for jmp, the jump location is simply an unsigned
+	integer.
+
+The structures for the different op codes is as follows:
+add (op type = 0):
+0000AAA000000000
+A: src port
+
+add (op type = 1):
+10000IIIIIIIIIII
+A: Integer to add to ACC
+
+mov (op type = 0):
+0001AAABBB000000
+A: src port
+B: dest port
+
+mov (op type = 1):
+11AAABBBBBBBBBBB
+A: dest port
+B: Integer to mov
+
+neg:
+0010000000000000
+
+sub:
+0011AAA000000000
+A: src port
+
+sav:
+0100000000000000
+
+swp:
+0101000000000000
+
+jmp:
+0110AAA00000BBBB
+A: jmp type
+B: jmp location
+
+jro:
+0111AAAB000CCCCC
+A: (if jro type = 1) src port (else) 000
+B: jro type
+C: (if jro type = 0) integer offset (else) 00000
+(integer offset is signed with 2's complement)
