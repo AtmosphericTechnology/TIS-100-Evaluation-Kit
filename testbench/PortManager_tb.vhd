@@ -158,13 +158,89 @@ begin
 
 	-- Stimulus process
 	stimProc: process
---		procedure 
---			rxLeftData <= dataVal;
---			commStart <= '1';
---			wait for clkPeriod * reqWaitTime;
---			rxLeftReq <= '1';
---			wait for 
---			commStart <= '0';
+		impure function getData(selPort : integer range 1 to 4) return std_logic_vector is
+		begin
+			case selPort is
+				when 1 =>
+					return txLeftData;
+				when 2 =>
+					return txRightData;
+				when 3 =>
+					return txUpData;
+				when 4 =>
+					return txDownData;
+			end case;
+		end getData;
+		
+		impure function getOpen(selPort : integer range 1 to 4) return std_logic is
+		begin
+			case selPort is
+				when 1 =>
+					return rxLeftOpen;
+				when 2 =>
+					return rxRightOpen;
+				when 3 =>
+					return rxUpOpen;
+				when 4 =>
+					return rxDownOpen;
+			end case;
+		end getOpen;
+		
+		impure function getReq(selPort : integer range 1 to 4) return std_logic is
+		begin
+			case selPort is
+				when 1 =>
+					return txLeftReq;
+				when 2 =>
+					return txRightReq;
+				when 3 =>
+					return txUpReq;
+				when 4 =>
+					return txDownReq;
+			end case;
+		end getReq;
+		
+		procedure setData(selPort : in integer range 1 to 4; dataVal : in std_logic_vector (10 downto 0)) is
+		begin
+			case selPort is
+				when 1 =>
+					rxLeftData <= dataVal;
+				when 2 =>
+					rxRightData <= dataVal;
+				when 3 =>
+					rxUpData <= dataVal;
+				when 4 =>
+					rxDownData <= dataVal;
+			end case;
+		end setData;
+		
+		procedure setOpen(selPort : in integer range 1 to 4; openVal : in std_logic) is
+		begin
+			case selPort is
+				when 1 =>
+					txLeftOpen <= openVal;
+				when 2 =>
+					txRightOpen <= openVal;
+				when 3 =>
+					txUpOpen <= openVal;
+				when 4 =>
+					txDownOpen <= openVal;
+			end case;
+		end setOpen;
+		
+		procedure setReq(selPort : in integer range 1 to 4; reqVal : in std_logic) is
+		begin
+			case selPort is
+				when 1 =>
+					txLeftReq <= openVal;
+				when 2 =>
+					txRightReq <= openVal;
+				when 3 =>
+					txUpReq <= openVal;
+				when 4 =>
+					txDownReq <= openVal;
+			end case;
+		end setReq;
 	begin
 		-- Hold reset for 5 cycles
 		rst <= '1';
@@ -173,41 +249,9 @@ begin
 		wait for clkPeriod;
 		
 		-- Start applying stimulus and testing results
-		commType <= "00"; -- COMM_RX
-		rxPort <= "010"; -- left
-		rxLeftData <= "01101000110";
-		commStart <= '1';
-		rxLeftReq <= '1';
-		wait for clkPeriod;
 		
-		rxLeftReq <= '0';
-		commStart <= '0';
-		wait for clkPeriod;
 		
-		rxLeftData <= "00010010100";
-		commStart <= '1';
-		rxLeftReq <= '1';
-		wait for clkPeriod;
-		
-		rxRightData <= "01100101011";
-		rxPort <= "011";
-		rxRightReq <= '1';
-		wait for clkPeriod;
-		
-		commStart <= '0';
-		rxRightReq <= '0';
-		wait for clkPeriod;
-		
-		rxPort <= "111"; -- last
-		commStart <= '1';
-		wait for clkPeriod;
-		
-		rxRightData <= "00111100010";
-		commStart <= '0';
-		rxRightReq <= '1';
-		wait for clkPeriod;
-		
-		rxRightReq <= '0';
+		-- Wait till finish
 		wait;
 	end process;
 
