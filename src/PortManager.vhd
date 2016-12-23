@@ -87,17 +87,18 @@ architecture Behavioral of PortManager is
 
 	signal last : std_logic_vector (2 downto 0) := "111"; -- storage for the last register. stores the port of the last succesful transfer.
 	
+	signal dataOutInt : std_logic_vector (10 downto 0) := (others => '0'); -- synchronous version of dataOut. Allows holding the value
+	
 	-- Stores which port was actually used for the transfer
 	-- Needed for any and last to store correctly
 	signal rxPortEquiv : std_logic_vector (2 downto 0) := (others => '0');
 	signal txPortEquiv : std_logic_vector (2 downto 0) := (others => '0');
 	
-	-- State storage for the comm port finite state machine
 	type stateType is (S_IDLE, S_RX_TRANSFER, S_TX_TRANSFER);
 	signal state, nextState : stateType := S_IDLE;
 begin
 
-	dataOut <= rxData;
+	dataOut <= dataOutInt;
 	debugLast <= last;
 
 	-------------------------------------
@@ -292,65 +293,43 @@ begin
 	begin
 		if rising_edge(clk) then
 			if (rst = '1') then
-				state <= S_IDLE;
+				state := S_IDLE;
 				last <= "111";
 			else
-				state <= nextState; -- synchronous update of state machine's state
-				
-				if state = S_IDLE then
-					if nextState /= S_IDLE then
-						if commType = "01" then -- tx
-							txData <= dataIn;
+				if (state = S_IDLE) then
+					if (commStart = '1') then
+						if ((commType = "00") or (commType = "10")) then -- Rx or RxTx
+							if (rxReady = '1') then
+								dataOutInt <= rxData;
+								last <= rxPortEquiv;
+							end if;
 						end if;
 					end if;
-				elsif nextState = S_IDLE then
-					null; -- TODO: Add transfer completion code if needed
+				elsif (state = S_RX_TRANSFER) then
+					if (rxReady = '1') then
+						dataOutInt <= rxData;
+						last <= rxPortEquiv;
+					end if;
+				elsif (state = S_TX_TRANSFER) then
+					if (txReady = '1') then
+						last <= txPortEquiv;
+					end if;
 				end if;
 			end if;
 		end if;
-	end process;
-	
-	---------------------------------------
-	-- fsmOutputProc
-	-- Description: 
-	---------------------------------------
-	fsmOutputProc: process(state, commStart, rxReady, commType, txReady) is
-	begin
-		rxOpen <= '0';
-		txReq <= '0';
-		commPause <= '0';
-		
-		case state is
-			when S_IDLE =>
-				if commStart = '1' then
-					commPause <= '1';
-				end if;
-			when S_RX_TRANSFER =>
-				rxOpen <= '1';
-				commPause <= '1';
-				if (rxReady = '1') and (commType = "00") then
-					commPause <= '0';
-				end if;
-			when S_TX_TRANSFER =>
-				txReq <= '1';
-				if (txReady = '0') then
-					commPause <= '1';
-				else
-					commPause <= '0';
-				end if;
-			when others =>
-				null;
-		end case;
 	end process;
 
 	fsmNextStateProc: process(state, commStart, commType, rxReady, txReady) is
 	begin
 		nextState <= state;
+		
 		case state is
 			when S_IDLE =>
 				if (commStart = '1') then
-					if (commType = "00") OR (commType = "10") then -- rx or both 
-						nextState <= S_RX_TRANSFER;
+					if ((commType = "00") or (commType = "10")) then -- Rx or RxTx
+						if (rxReady = '0') then
+							nextState <= S_RX_TRANSFER;
+						end if;
 					elsif (commType = "01") then
 						nextState <= S_TX_TRANSFER;
 					end if;
@@ -369,6 +348,56 @@ begin
 				end if;
 			when others =>
 				nextState <= S_IDLE;
+		end case;
+	end process;
+	
+	---------------------------------------
+	-- fsmOutputProc
+	-- Description: 
+	---------------------------------------
+	fsmOutputProc: process(state, commStart, rxReady, commType, txReady) is
+	begin
+		rxOpen <= '0';
+		txReq <= '0';
+		txData <= (others => '0');
+		commPause <= '0';
+		
+		case state is
+			when S_IDLE =>
+				if (commStart = '1') then
+					commPause <= '1';
+					
+					if (commType = "00") then -- Rx
+						rxOpen <= '1';
+						
+						if (rxReady = '1') then
+							commPause <= '0';
+						end if;
+					end if;
+				end if;
+			when S_RX_TRANSFER =>
+				rxOpen <= '1';
+				commPause <= '1';
+				
+				if ((rxReady = '1') and (commType = "00")) then -- Rx
+					commPause <= '0';
+				end if;
+			when S_TX_TRANSFER =>
+				txReq <= '1';
+				commPause <= '1';
+				
+				-- Select the correct source for txData
+				if (commType = "01") then -- Tx
+					txData <= dataIn;
+				elsif (commType = "10") then -- RxTx
+					txData <= dataOutInt;
+				end if;
+				
+				if (txReady = '1') then
+					commPause <= '0';
+				end if;
+			when others =>
+				null;
 		end case;
 	end process;
 end Behavioral;
