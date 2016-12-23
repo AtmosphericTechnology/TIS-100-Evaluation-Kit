@@ -65,3 +65,13 @@ xlnx_auto_0_xdb/
 xst/
 _ngo/
 _xmsgs/
+
+# isim folders
+isim/
+
+# isim files
+fuse.log
+fuse.xmsgs
+fuseRelaunch.cmd
+*isim*
+xilinxsim.ini

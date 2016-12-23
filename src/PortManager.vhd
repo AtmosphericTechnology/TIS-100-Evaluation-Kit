@@ -293,7 +293,7 @@ begin
 	begin
 		if rising_edge(clk) then
 			if (rst = '1') then
-				state := S_IDLE;
+				state <= S_IDLE;
 				last <= "111";
 			else
 				if (state = S_IDLE) then
