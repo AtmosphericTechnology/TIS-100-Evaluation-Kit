@@ -108,7 +108,7 @@ begin
 	-- 	which port "any" and "last" relate too and which port to direct
 	-- 	the different signals.
 	-------------------------------------
-	transferStatusBitProc: process(txData, rxPort, rxOpen, rxLeftReq, rxLeftData, rxRightReq, rxRightData, rxUpReq, rxUpData, rxDownReq, rxDownData, last, txLeftOpen, txReq, txRightOpen, txUpOpen, txDownOpen) is
+	transferStatusBitProc: process(txData, rxPort, txPort, rxOpen, rxReq, rxLeftReq, rxLeftData, rxRightReq, rxRightData, rxUpReq, rxUpData, rxDownReq, rxDownData, last, txOpen, txLeftOpen, txReq, txRightOpen, txUpOpen, txDownOpen) is
 	begin
 		-- Set initial values for the signals
 		rxLeftOpen <= '0';
@@ -296,6 +296,8 @@ begin
 				state <= S_IDLE;
 				last <= "111";
 			else
+				state <= nextState;
+				
 				if (state = S_IDLE) then
 					if (commStart = '1') then
 						if ((commType = "00") or (commType = "10")) then -- Rx or RxTx
@@ -355,7 +357,7 @@ begin
 	-- fsmOutputProc
 	-- Description: 
 	---------------------------------------
-	fsmOutputProc: process(state, commStart, rxReady, commType, txReady) is
+	fsmOutputProc: process(state, commStart, rxReady, commType, dataIn, dataOutInt, txReady) is
 	begin
 		rxOpen <= '0';
 		txReq <= '0';
