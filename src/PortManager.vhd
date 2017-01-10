@@ -14,8 +14,11 @@
 -- 	
 -- Revision: 
 -- 	Revision 0.9 - Prerelease version
--- Additional Comments: 
---
+-- Additional Comments:
+-- 	The behaviour of the port is that it always follows a standard loop:
+-- 		Start -> Rx -> Tx -> Completed
+-- 		Therefore to transmit, the Manager should do the receive without receiving anything.
+-- 		The current implementation just takes a shortcut and just pauses for a cycle.
 ----------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
@@ -328,12 +331,18 @@ begin
 		case state is
 			when S_IDLE =>
 				if (commStart = '1') then
-					if ((commType = "00") or (commType = "10")) then -- Rx or RxTx
+					if (commType = "00") then -- Rx
 						if (rxReady = '0') then
 							nextState <= S_RX_TRANSFER;
 						end if;
-					elsif (commType = "01") then
+					elsif (commType = "01") then -- Tx
 						nextState <= S_TX_TRANSFER;
+					elsif (commType = "10") then -- RxTx
+						if (rxReady = '0') then
+							nextState <= S_RX_TRANSFER;
+						else
+							nextState <= S_TX_TRANSFER;
+						end if;
 					end if;
 				end if;
 			when S_RX_TRANSFER =>
@@ -375,6 +384,8 @@ begin
 						if (rxReady = '1') then
 							commPause <= '0';
 						end if;
+					elsif (commType = "10") then -- RxTx
+						rxOpen <= '1';
 					end if;
 				end if;
 			when S_RX_TRANSFER =>
