@@ -4,7 +4,7 @@
 -- Email/Contact: atmospherictechnology@gmail.com
 -- 
 -- Create Date:	12:48:34 12/20/2016
--- Design Name: TIS-100_CommPortController
+-- Design Name: TIS-100_PortManager
 -- Module Name:	PortManager_tb - Behavioral 
 -- Project Name: TIS-100_Evaluation_Kit
 -- Tool versions: ISE 14.7
