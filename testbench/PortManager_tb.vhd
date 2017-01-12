@@ -535,9 +535,18 @@ begin
 				
 				stimulateReceiveAny(targetPort, testData);
 			end if;
+			
+			wait for 1 ns;
+			if (commType /= "10") then
+				wait for 3 ns;
+				assert (dataOut = testData) report "The data is not passed through to dataOut before rising edge" & LF & "In receiveData" & LF & "dataOut: " & integer'image(to_integer(signed(dataOut))) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & LF severity failure;
+			end if;
+			
 			delayCycle; -- Step to execute
 			
-			assert (dataOut = testData) report "dataOut not equal to testData" & LF & "In receiveData" & LF & "selPort: " & integer'image(selPort) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & "dataOut: " & integer'image(to_integer(signed(dataOut))) & LF & LF severity failure;
+			if (commType /= "10") then
+				assert (dataOut = testData) report "dataOut not equal to testData" & LF & "In receiveData" & LF & "selPort: " & integer'image(selPort) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & "dataOut: " & integer'image(to_integer(signed(dataOut))) & LF & LF severity failure;
+			end if;
 			-- Reset all rx ports to default state
 			resetReceiveAny;
 		end receiveData;

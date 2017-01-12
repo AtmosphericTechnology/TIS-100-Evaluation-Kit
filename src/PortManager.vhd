@@ -305,14 +305,12 @@ begin
 					if (commStart = '1') then
 						if ((commType = "00") or (commType = "10")) then -- Rx or RxTx
 							if (rxReady = '1') then
-								dataOutInt <= rxData;
 								last <= rxPortEquiv;
 							end if;
 						end if;
 					end if;
 				elsif (state = S_RX_TRANSFER) then
 					if (rxReady = '1') then
-						dataOutInt <= rxData;
 						last <= rxPortEquiv;
 					end if;
 				elsif (state = S_TX_TRANSFER) then
@@ -367,7 +365,7 @@ begin
 	-- fsmOutputProc
 	-- Description: 
 	---------------------------------------
-	fsmOutputProc: process(state, commStart, rxReady, commType, dataIn, dataOutInt, txReady) is
+	fsmOutputProc: process(state, commStart, rxReady, commType, dataIn, dataOutInt, txReady, rxData) is
 	begin
 		if (rst = '1') then
 			txData <= (others => '0');
@@ -384,6 +382,12 @@ begin
 					if (commStart = '1') then
 						commPause <= '1';
 						
+						-- When the transaction is ready to complete
+						-- Store the data
+						if (rxReady = '1') then
+							dataOutInt <= rxData;
+						end if;
+						
 						if (commType = "00") then -- Rx
 							rxOpen <= '1';
 							
@@ -398,8 +402,11 @@ begin
 					rxOpen <= '1';
 					commPause <= '1';
 					
-					if ((rxReady = '1') and (commType = "00")) then -- Rx
-						commPause <= '0';
+					if (rxReady = '1') then
+						dataOutInt <= rxData;
+						if (commType = "00") then -- Rx
+							commPause <= '0';
+						end if;
 					end if;
 				when S_TX_TRANSFER =>
 					txReq <= '1';
