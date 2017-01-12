@@ -156,22 +156,22 @@ begin
 			when "110" => -- Any
 				-- Choose the port based on the precedence (left > right > up > down)
 				-- Rx does not make itself known until the tx does.
-				if (rxLeftReq = '1') then
+				if (rxLeftReq = '1') then -- Left
 					rxLeftOpen <= rxOpen;
 					rxReq <= rxLeftReq;
 					rxData <= rxLeftData;
 					rxPortEquiv <= "010";
-				elsif (rxRightReq = '1') then
+				elsif (rxRightReq = '1') then -- Right
 					rxRightOpen <= rxOpen;
 					rxReq <= rxRightReq;
 					rxData <= rxRightData;
 					rxPortEquiv <= "011";
-				elsif (rxUpReq = '1') then
+				elsif (rxUpReq = '1') then -- Up
 					rxUpOpen <= rxOpen;
 					rxReq <= rxUpReq;
 					rxData <= rxUpData;
 					rxPortEquiv <= "100";
-				elsif (rxDownReq = '1') then
+				elsif (rxDownReq = '1') then -- Down
 					rxDownOpen <= rxOpen;
 					rxReq <= rxDownReq;
 					rxData <= rxDownData;
@@ -226,28 +226,28 @@ begin
 				txUpReq <= txReq;
 				txDownReq <= txReq;
 				
-				if (txLeftOpen = '1') then
+				if (txLeftOpen = '1') then -- Left
 					txLeftReq <= txReq;
 					txRightReq <= '0';
 					txUpReq <= '0';
 					txDownReq <= '0';
 					txOpen <= txLeftOpen;
 					txPortEquiv <= "010";
-				elsif (txRightOpen = '1') then
+				elsif (txRightOpen = '1') then -- Right
 					txLeftReq <= '0';
 					txRightReq <= txReq;
 					txUpReq <= '0';
 					txDownReq <= '0';
 					txOpen <= txRightOpen;
 					txPortEquiv <= "011";
-				elsif (txUpOpen = '1') then
+				elsif (txUpOpen = '1') then -- Up
 					txLeftReq <= '0';
 					txRightReq <= '0';
 					txUpReq <= txReq;
 					txDownReq <= '0';
 					txOpen <= txUpOpen;
 					txPortEquiv <= "100";
-				elsif (txDownOpen = '1') then
+				elsif (txDownOpen = '1') then -- Down
 					txLeftReq <= '0';
 					txRightReq <= '0';
 					txUpReq <= '0';
@@ -297,35 +297,39 @@ begin
 		if rising_edge(clk) then
 			if (rst = '1') then
 				state <= S_IDLE;
-				last <= "111";
+				last <= "111"; -- Reset last to an invalid port. Causes lockup when unset
 			else
-				state <= nextState;
+				state <= nextState; -- Update the state
 				
 				if (state = S_IDLE) then
 					if (commStart = '1') then
 						if ((commType = "00") or (commType = "10")) then -- Rx or RxTx
+							-- Allow Rx to happen on the first cycle
 							if (rxReady = '1') then
-								last <= rxPortEquiv;
+								last <= rxPortEquiv; -- Set Last port to the calculated Rx port
 							end if;
 						end if;
 					end if;
 				elsif (state = S_RX_TRANSFER) then
 					if (rxReady = '1') then
-						last <= rxPortEquiv;
+						last <= rxPortEquiv; -- Set Last port to the calculated Rx port
 					end if;
 				elsif (state = S_TX_TRANSFER) then
 					if (txReady = '1') then
-						last <= txPortEquiv;
+						last <= txPortEquiv; -- Set Last port to the calculated Tx port
 					end if;
 				end if;
 			end if;
 		end if;
 	end process;
 	
-	
+	---------------------------------------
+	-- fsmNextStateProc
+	-- Description: Calculates the next state of the FSM based on current inputs
+	---------------------------------------
 	fsmNextStateProc: process(state, commStart, commType, rxReady, txReady) is
 	begin
-		nextState <= state;
+		nextState <= state; -- nextState holds the current state by default
 		
 		case state is
 			when S_IDLE =>
@@ -363,7 +367,7 @@ begin
 	
 	---------------------------------------
 	-- fsmOutputProc
-	-- Description: 
+	-- Description: Set the FSM outputs based on the the current state and inputs
 	---------------------------------------
 	fsmOutputProc: process(state, commStart, rxReady, commType, dataIn, dataOutInt, txReady, rxData) is
 	begin
@@ -380,10 +384,9 @@ begin
 			case state is
 				when S_IDLE =>
 					if (commStart = '1') then
-						commPause <= '1';
+						commPause <= '1'; -- Pause the node's execution
 						
-						-- When the transaction is ready to complete
-						-- Store the data
+						-- When the transaction is ready to complete, store the data
 						if (rxReady = '1') then
 							dataOutInt <= rxData;
 						end if;
