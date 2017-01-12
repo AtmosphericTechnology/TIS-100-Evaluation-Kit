@@ -88,12 +88,12 @@ architecture Behavioral of PortManager is
 	signal txReady : std_logic := '0'; -- Tx transfer is ready this cycle
 	signal txData : std_logic_vector (10 downto 0) := (others => '0'); -- Data to transfer to chosen port
 
-	signal last : std_logic_vector (2 downto 0) := "111"; -- storage for the last register. stores the port of the last succesful transfer.
+	signal last : std_logic_vector (2 downto 0) := "111"; -- Storage for the last register. stores the port of the last succesful transfer.
 	
-	signal dataOutInt : std_logic_vector (10 downto 0) := (others => '0'); -- synchronous version of dataOut. Allows holding the value
+	signal dataOutInt : std_logic_vector (10 downto 0) := (others => '0'); -- Synchronous version of dataOut. Allows holding the value
 	
 	-- Stores which port was actually used for the transfer
-	-- Needed for any and last to store correctly
+	-- needed for any and last to store correctly
 	signal rxPortEquiv : std_logic_vector (2 downto 0) := (others => '0');
 	signal txPortEquiv : std_logic_vector (2 downto 0) := (others => '0');
 	
@@ -107,7 +107,7 @@ begin
 	-------------------------------------
 	-- transferStatusBitProc
 	-- Description: Handles all the status bits related
-	-- 	to the communication protocols. handles 
+	-- 	to the communication protocols. Handles 
 	-- 	which port "any" and "last" relate too and which port to direct
 	-- 	the different signals.
 	-------------------------------------
@@ -137,23 +137,23 @@ begin
 		
 		-- Route the chosen rx ports signals.
 		case rxPort is
-			when "010" => -- left
+			when "010" => -- Left
 				rxLeftOpen <= rxOpen;
 				rxReq <= rxLeftReq;
 				rxData <= rxLeftData;
-			when "011" => -- right
+			when "011" => -- Right
 				rxRightOpen <= rxOpen;
 				rxReq <= rxRightReq;
 				rxData <= rxRightData;
-			when "100" => -- up
+			when "100" => -- Up
 				rxUpOpen <= rxOpen;
 				rxReq <= rxUpReq;
 				rxData <= rxUpData;
-			when "101" => -- down
+			when "101" => -- Down
 				rxDownOpen <= rxOpen;
 				rxReq <= rxDownReq;
 				rxData <= rxDownData;
-			when "110" => -- any
+			when "110" => -- Any
 				-- Choose the port based on the precedence (left > right > up > down)
 				-- Rx does not make itself known until the tx does.
 				if (rxLeftReq = '1') then
@@ -177,22 +177,22 @@ begin
 					rxData <= rxDownData;
 					rxPortEquiv <= "101";
 				end if;
-			when "111" => -- last
+			when "111" => -- Last
 				rxPortEquiv <= last;
 				case last is
-					when "010" => -- left
+					when "010" => -- Left
 						rxLeftOpen <= rxOpen;
 						rxReq <= rxLeftReq;
 						rxData <= rxLeftData;
-					when "011" => -- right
+					when "011" => -- Right
 						rxRightOpen <= rxOpen;
 						rxReq <= rxRightReq;
 						rxData <= rxRightData;
-					when "100" => -- up
+					when "100" => -- Up
 						rxUpOpen <= rxOpen;
 						rxReq <= rxUpReq;
 						rxData <= rxUpData;
-					when "101" => -- down
+					when "101" => -- Down
 						rxDownOpen <= rxOpen;
 						rxReq <= rxDownReq;
 						rxData <= rxDownData;
@@ -206,19 +206,19 @@ begin
 		
 		-- Route the chosen tx ports signals.
 		case txPort is
-			when "010" => -- left
+			when "010" => -- Left
 				txOpen <= txLeftOpen;
 				txLeftReq <= txReq;
-			when "011" => -- right
+			when "011" => -- Right
 				txOpen <= txRightOpen;
 				txRightReq <= txReq;
-			when "100" => -- up
+			when "100" => -- Up
 				txOpen <= txUpOpen;
 				txUpReq <= txReq;
-			when "101" => -- down
+			when "101" => -- Down
 				txOpen <= txDownOpen;
 				txDownReq <= txReq;
-			when "110" => -- any
+			when "110" => -- Any
 				-- Tx makes itself known to all ports first then
 				-- chooses the port based on its priority.
 				txLeftReq <= txReq;
@@ -255,19 +255,19 @@ begin
 					txOpen <= txDownOpen;
 					txPortEquiv <= "101";
 				end if;
-			when "111" => -- last
+			when "111" => -- Last
 				txPortEquiv <= last;
 				case last is
-					when "010" => -- left
+					when "010" => -- Left
 						txOpen <= txLeftOpen;
 						txLeftReq <= txReq;
-					when "011" => -- right
+					when "011" => -- Right
 						txOpen <= txRightOpen;
 						txRightReq <= txReq;
-					when "100" => -- up
+					when "100" => -- Up
 						txOpen <= txUpOpen;
 						txUpReq <= txReq;
-					when "101" => -- down
+					when "101" => -- Down
 						txOpen <= txDownOpen;
 						txDownReq <= txReq;
 					when others =>
@@ -379,6 +379,7 @@ begin
 			txReq <= '0';
 			commPause <= '0';
 			
+			case state is
 				when S_IDLE =>
 					if (commStart = '1') then
 						commPause <= '1';
