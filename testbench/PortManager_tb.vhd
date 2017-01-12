@@ -537,6 +537,7 @@ begin
 			end if;
 			delayCycle; -- Step to execute
 			
+			assert (dataOut = testData) report "dataOut not equal to testData" & LF & "In receiveData" & LF & "selPort: " & integer'image(selPort) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & "dataOut: " & integer'image(to_integer(signed(dataOut))) & LF & LF severity failure;
 			-- Reset all rx ports to default state
 			resetReceiveAny;
 		end receiveData;
@@ -545,12 +546,12 @@ begin
 		-- transmitData
 		-- Description: Same as receiveData but for transmitting
 		----------------------------------
-		procedure transmitData(selPort : in integer range 1 to 6) is
+		procedure transmitData(selPort : in integer range 1 to 6; testData : in std_logic_vector (10 downto 0)) is
 			variable lastPort : integer range 1 to 4; -- Current last port as an int
 			variable targetPort : integer range 1 to 4; -- Port targeted by "Any"
 		begin
 			if (selPort /= 5) then -- Physical comm port or Last
-				if (selPort = 5) then -- Last
+				if (selPort = 6) then -- Last
 					lastPort := portToInt(debugLast); -- convert vector form to int
 					report "transmitData lastPort: " & integer'image(lastPort) & LF & LF;
 					
@@ -567,6 +568,13 @@ begin
 			end if;
 			delayCycle; -- Step to execute
 			
+			if (selPort = 5) then
+				assert (getData(targetPort) = testData) report "Data transmitted not equal to testData" & LF & "In transmitData" & LF & "targetPort: " & integer'image(targetPort) & LF & "Transmitted Data: " & integer'image(to_integer(signed(getData(targetPort)))) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & LF severity failure;
+			elsif (selPort = 6) then
+				assert (getData(targetPort) = testData) report "Data transmitted not equal to testData" & LF & "In transmitData" & LF & "lastPort: " & integer'image(targetPort) & LF & "Transmitted Data: " & integer'image(to_integer(signed(getData(lastPort)))) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & LF severity failure;
+			else
+				assert (getData(targetPort) = testData) report "Data transmitted not equal to testData" & LF & "In transmitData" & LF & "selPort: " & integer'image(selPort) & LF & "Transmitted Data: " & integer'image(to_integer(signed(getData(selPort)))) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & LF severity failure;
+			end if;
 			-- Reset all tx ports to deault state
 			resetTransmitAny;
 		end transmitData;
@@ -580,7 +588,7 @@ begin
 		begin
 			-- Setup the comm's settings
 			setupComms("00", receivePort, 1);
-			delayCycles(receiveDelay); -- Delay speciefied time
+			delayCycles(receiveDelay); -- Delay specified time
 			
 			receiveData(receivePort, testData);
 		end testReceivePort;
@@ -601,7 +609,7 @@ begin
 			
 			-- Set the data to send then transmit it
 			dataIn <= testData;
-			transmitData(transmitPort);
+			transmitData(transmitPort, testData);
 		end testTransmitPort;
 		
 		----------------------------------
@@ -620,7 +628,7 @@ begin
 			delayCycles(transmitDelay);
 			
 			-- Transmit the received data
-			transmitData(transmitPort);
+			transmitData(transmitPort, testData);
 		end testReceiveTransmitPort;
 		
 		----------------------------------

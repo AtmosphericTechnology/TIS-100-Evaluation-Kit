@@ -220,7 +220,7 @@ begin
 				txDownReq <= txReq;
 			when "110" => -- any
 				-- Tx makes itself known to all ports first then
-				-- Chooses the port based on its priority.
+				-- chooses the port based on its priority.
 				txLeftReq <= txReq;
 				txRightReq <= txReq;
 				txUpReq <= txReq;
@@ -323,7 +323,8 @@ begin
 			end if;
 		end if;
 	end process;
-
+	
+	
 	fsmNextStateProc: process(state, commStart, commType, rxReady, txReady) is
 	begin
 		nextState <= state;
