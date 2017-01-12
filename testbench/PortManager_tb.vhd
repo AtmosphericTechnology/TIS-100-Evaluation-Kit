@@ -258,8 +258,12 @@ begin
 			end case;
 		end portToInt;
 		
+		----------------------------------
+		-- randInt
+		-- Description: Generates a random integer between upper and lower limits
+		----------------------------------
 		impure function randInt(upper, lower : real) return integer is
-			variable tempOut : integer range -999 to 999;
+			variable tempOut : integer;
 		begin
 			randInt(seed1, seed2, upper, lower, tempOut);
 			return tempOut;
@@ -536,19 +540,16 @@ begin
 				stimulateReceiveAny(targetPort, testData);
 			end if;
 			
-			wait for 1 ns;
-			if (commType /= "10") then
-				wait for 3 ns;
-				assert (dataOut = testData) report "The data is not passed through to dataOut before rising edge" & LF & "In receiveData" & LF & "dataOut: " & integer'image(to_integer(signed(dataOut))) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & LF severity failure;
-			end if;
+			-- Test the data is passed through before rising_edge(clk)
+			wait for 4 ns;
+			assert (dataOut = testData) report "The data is not passed through to dataOut before rising edge" & LF & "In receiveData" & LF & "dataOut: " & integer'image(to_integer(signed(dataOut))) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & LF severity failure;
 			
 			delayCycle; -- Step to execute
 			
-			if (commType /= "10") then
-				assert (dataOut = testData) report "dataOut not equal to testData" & LF & "In receiveData" & LF & "selPort: " & integer'image(selPort) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & "dataOut: " & integer'image(to_integer(signed(dataOut))) & LF & LF severity failure;
-			end if;
-			-- Reset all rx ports to default state
-			resetReceiveAny;
+			-- Test the data is correct after rising_edge(clk)
+			assert (dataOut = testData) report "dataOut not equal to testData" & LF & "In receiveData" & LF & "selPort: " & integer'image(selPort) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & "dataOut: " & integer'image(to_integer(signed(dataOut))) & LF & LF severity failure;
+			
+			resetReceiveAny; -- Reset all rx ports to default state
 		end receiveData;
 		
 		----------------------------------
@@ -577,15 +578,16 @@ begin
 			end if;
 			delayCycle; -- Step to execute
 			
-			if (selPort = 5) then
+			-- Test the data being transmitted is correct. Pseudo-ports need to use the port in their relevent variable
+			if (selPort = 5) then -- "Any"
 				assert (getData(targetPort) = testData) report "Data transmitted not equal to testData" & LF & "In transmitData" & LF & "targetPort: " & integer'image(targetPort) & LF & "Transmitted Data: " & integer'image(to_integer(signed(getData(targetPort)))) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & LF severity failure;
-			elsif (selPort = 6) then
+			elsif (selPort = 6) then -- "Last"
 				assert (getData(targetPort) = testData) report "Data transmitted not equal to testData" & LF & "In transmitData" & LF & "lastPort: " & integer'image(targetPort) & LF & "Transmitted Data: " & integer'image(to_integer(signed(getData(lastPort)))) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & LF severity failure;
-			else
+			else -- Physical port
 				assert (getData(targetPort) = testData) report "Data transmitted not equal to testData" & LF & "In transmitData" & LF & "selPort: " & integer'image(selPort) & LF & "Transmitted Data: " & integer'image(to_integer(signed(getData(selPort)))) & LF & "testData: " & integer'image(to_integer(signed(testData))) & LF & LF severity failure;
 			end if;
-			-- Reset all tx ports to deault state
-			resetTransmitAny;
+			
+			resetTransmitAny; -- Reset all tx ports to deault state
 		end transmitData;
 		
 		----------------------------------
