@@ -57,7 +57,7 @@ add (op type = 0):
 A: src port
 
 add (op type = 1):
-10000IIIIIIIIIII
+10000AAAAAAAAAAA
 A: Integer to add to ACC
 
 mov (op type = 0):
